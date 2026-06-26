@@ -17,7 +17,9 @@ function generateInvoiceNo() {
   return `INV${date}${month}${year}${hour}${minute}${second}`;
 }
 
-export async function checkout(items: CartItem[], paid: number, discount: number) {
+type PaymentMethod = "cash" | "qris" | "transfer";
+
+export async function checkout(items: CartItem[], paid: number, discount: number, paymentType: PaymentMethod = "cash") {
   const user = await getCurrentUser();
   if (!user) throw new Error("Tidak terautentikasi");
   if (items.length === 0) throw new Error("Keranjang kosong");
@@ -54,6 +56,7 @@ export async function checkout(items: CartItem[], paid: number, discount: number
         total,
         paid,
         change,
+        paymentType,
         items: {
           create: lineItems.map((li) => ({
             productId: li.product.id,

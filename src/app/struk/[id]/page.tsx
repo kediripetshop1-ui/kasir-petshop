@@ -6,6 +6,12 @@ function formatRupiah(value: number) {
   return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(value);
 }
 
+function paymentLabel(method: string) {
+  if (method === "qris") return "QRIS";
+  if (method === "transfer") return "Transfer";
+  return "Cash";
+}
+
 export default async function StrukPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const sale = await db.sale.findUnique({
@@ -32,6 +38,7 @@ export default async function StrukPage({ params }: { params: Promise<{ id: stri
         <div className="my-2 border-t border-dashed border-black" />
         <p>No. Invoice: {sale.invoiceNo}</p>
         <p>Kasir: {sale.cashierName}</p>
+        <p>Metode Bayar: {paymentLabel(sale.paymentType)}</p>
         <div className="my-2 border-t border-dashed border-black" />
 
         {sale.items.map((item) => (

@@ -25,6 +25,7 @@ export default function PosClient({ products }: { products: Product[] }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [discount, setDiscount] = useState(0);
   const [paid, setPaid] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "qris" | "transfer">("cash");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -68,13 +69,21 @@ export default function PosClient({ products }: { products: Product[] }) {
         const saleId = await checkout(
           cart.map((l) => ({ productId: l.product.id, qty: l.qty })),
           paid,
-          discount
+          discount,
+          paymentMethod
         );
         router.push(`/struk/${saleId}`);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Gagal memproses transaksi");
       }
     });
+  }
+
+  function selectPaymentMethod(method: "cash" | "qris" | "transfer") {
+    setPaymentMethod(method);
+    if (method !== "cash") {
+      setPaid(total);
+    }
   }
 
   return (
@@ -147,16 +156,53 @@ export default function PosClient({ products }: { products: Product[] }) {
             <span>Total</span>
             <span>{formatRupiah(total)}</span>
           </div>
+
+          <div>
+            <p className="mb-1 text-neutral-300">Metode Bayar</p>
+            <div className="grid grid-cols-3 gap-2">
+              {(
+                [
+                  { value: "cash", label: "Cash" },
+                  { value: "qris", label: "QRIS" },
+                  { value: "transfer", label: "Transfer" },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => selectPaymentMethod(opt.value)}
+                  className={`rounded-lg border px-2 py-2 text-sm font-medium transition ${
+                    paymentMethod === opt.value
+                      ? "border-emerald-600 bg-emerald-600 text-white"
+                      : "border-neutral-700 bg-neutral-800 text-neutral-300 hover:border-neutral-500"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="flex items-center justify-between text-neutral-300">
             <span>Bayar</span>
-            <input
-              id="paid-input"
-              type="number"
-              value={paid}
-              min={0}
-              onChange={(e) => setPaid(Number(e.target.value))}
-              className="w-28 rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-right text-white"
-            />
+            <div className="flex items-center gap-2">
+              {paymentMethod === "cash" && (
+                <button
+                  onClick={() => setPaid(total)}
+                  className="rounded-md border border-neutral-700 bg-neutral-800 px-2 py-1 text-xs text-neutral-300 hover:border-emerald-600 hover:text-white"
+                >
+                  Uang Pas
+                </button>
+              )}
+              <input
+                id="paid-input"
+                type="number"
+                value={paid}
+                min={0}
+                disabled={paymentMethod !== "cash"}
+                onChange={(e) => setPaid(Number(e.target.value))}
+                className="w-28 rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-right text-white disabled:opacity-60"
+              />
+            </div>
           </div>
           <div className="flex justify-between text-neutral-300">
             <span>Kembalian</span>
