@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  username  String   @unique
+  password  String
+  role      String   @default("kasir") // admin | kasir
+  createdAt DateTime @default(now())
+  sessions  Session[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  products Product[]
+}
+
+model Product {
+  id         String     @id @default(cuid())
+  sku        String     @unique
+  name       String
+  categoryId String?
+  category   Category?  @relation(fields: [categoryId], references: [id])
+  unit       String     @default("pcs")
+  costPrice  Int        @default(0)
+  sellPrice  Int
+  stock      Int        @default(0)
+  minStock   Int        @default(0)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  saleItems  SaleItem[]
+  stockLogs  StockLog[]
+}
+
+model StockLog {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  change    Int
+  reason    String // "nota_masuk" | "penjualan" | "koreksi"
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model Sale {
+  id          String     @id @default(cuid())
+  invoiceNo   String     @unique
+  cashierName String
+  subtotal    Int
+  discount    Int        @default(0)
+  total       Int
+  paid        Int
+  change      Int
+  paymentType String     @default("cash")
+  items       SaleItem[]
+  createdAt   DateTime   @default(now())
+}
+
+model SaleItem {
+  id        String  @id @default(cuid())
+  saleId    String
+  sale      Sale    @relation(fields: [saleId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  qty       Int
+  price     Int
+  subtotal  Int
+}
