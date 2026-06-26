@@ -24,8 +24,9 @@ export default async function StrukPage({ params }: { params: Promise<{ id: stri
         style={{ fontFamily: "'Courier New', monospace", fontSize: "12px" }}
       >
         <div className="text-center">
-          <p className="text-base font-bold">PETSHOP</p>
-          <p>Jl. Contoh No. 1, Kota Anda</p>
+          <p className="text-base font-bold">Kediri Petshop</p>
+          <p>Jl. Kediri No.31B, Tuban, Kec. Kuta,</p>
+          <p>Kabupaten Badung, Bali 80361</p>
           <p>{new Date(sale.createdAt).toLocaleString("id-ID")}</p>
         </div>
         <div className="my-2 border-t border-dashed border-black" />

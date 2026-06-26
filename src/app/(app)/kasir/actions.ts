@@ -5,6 +5,18 @@ import { getCurrentUser } from "@/lib/auth";
 
 type CartItem = { productId: string; qty: number };
 
+function generateInvoiceNo() {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const date = pad(now.getDate());
+  const month = pad(now.getMonth() + 1);
+  const year = now.getFullYear();
+  const hour = pad(now.getHours());
+  const minute = pad(now.getMinutes());
+  const second = pad(now.getSeconds());
+  return `INV${date}${month}${year}${hour}${minute}${second}`;
+}
+
 export async function checkout(items: CartItem[], paid: number, discount: number) {
   const user = await getCurrentUser();
   if (!user) throw new Error("Tidak terautentikasi");
@@ -30,7 +42,7 @@ export async function checkout(items: CartItem[], paid: number, discount: number
   if (paid < total) throw new Error("Pembayaran kurang dari total");
   const change = paid - total;
 
-  const invoiceNo = `INV${Date.now()}`;
+  const invoiceNo = generateInvoiceNo();
 
   const sale = await db.$transaction(async (tx) => {
     const created = await tx.sale.create({
