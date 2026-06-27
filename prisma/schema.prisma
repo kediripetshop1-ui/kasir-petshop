@@ -90,3 +90,13 @@ model Expense {
   cashierName String
   createdAt   DateTime @default(now())
 }
+
+// Antrian konfirmasi stok masuk dari foto nota via WhatsApp.
+// Satu pending aktif per nomor pengirim (waNumber unik).
+model WaPending {
+  id        String   @id @default(cuid())
+  waNumber  String   @unique
+  payload   String // JSON: { items: [{ productId, nama, qty, hargaSatuan }] }
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}

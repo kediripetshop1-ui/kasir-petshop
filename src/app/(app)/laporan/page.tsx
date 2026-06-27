@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { formatBaliDateTime, getBaliDateKey, getBaliDayRange } from "@/lib/datetime";
+import KirimWaButton from "./kirim-wa-button";
 
 function formatRupiah(value: number) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
@@ -57,13 +58,16 @@ export default async function LaporanPage() {
             {" · "}Pengeluaran: <span className="font-semibold text-red-600">{formatRupiah(totalPengeluaranHariIni)}</span>
           </p>
         </div>
-        <Link
-          href="/laporan-cetak"
-          target="_blank"
-          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
-        >
-          Cetak Laporan Harian
-        </Link>
+        <div className="flex items-start gap-2">
+          <KirimWaButton />
+          <Link
+            href="/laporan-cetak"
+            target="_blank"
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+          >
+            Cetak Laporan Harian
+          </Link>
+        </div>
       </div>
 
       <div>
