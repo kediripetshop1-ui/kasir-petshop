@@ -36,11 +36,20 @@ export default async function LaporanPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">Laporan Penjualan</h1>
-        <p className="text-sm text-neutral-400">
-          Total hari ini: <span className="font-semibold text-emerald-400">{formatRupiah(totalHariIni)}</span>
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Laporan Penjualan</h1>
+          <p className="text-sm text-neutral-400">
+            Total hari ini: <span className="font-semibold text-emerald-400">{formatRupiah(totalHariIni)}</span>
+          </p>
+        </div>
+        <Link
+          href="/laporan-cetak"
+          target="_blank"
+          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+        >
+          Cetak Laporan Harian
+        </Link>
       </div>
 
       <div>
