@@ -13,13 +13,18 @@ export default async function ProdukPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-white">Produk</h1>
+      <div>
+        <h1 className="text-2xl font-bold text-white">Produk</h1>
+        <p className="text-sm text-neutral-400">
+          Tips: isi kolom SKU dengan nomor barcode produk (lihat di kemasan) supaya bisa langsung di-scan di halaman Kasir.
+        </p>
+      </div>
 
       <form
         action={createProduct}
         className="grid grid-cols-2 gap-3 rounded-xl border border-neutral-800 bg-neutral-900 p-4 md:grid-cols-4"
       >
-        <input name="sku" placeholder="SKU" required className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-white" />
+        <input name="sku" placeholder="SKU / No. Barcode" required className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-white" />
         <input name="name" placeholder="Nama produk" required className="col-span-2 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-white" />
         <select name="categoryId" className="rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-white">
           <option value="">Tanpa kategori</option>

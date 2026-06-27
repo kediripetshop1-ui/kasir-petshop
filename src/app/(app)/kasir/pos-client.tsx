@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { checkout } from "./actions";
 
@@ -27,7 +27,13 @@ export default function PosClient({ products }: { products: Product[] }) {
   const [paid, setPaid] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "qris" | "transfer">("cash");
   const [error, setError] = useState<string | null>(null);
+  const [scanInfo, setScanInfo] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    searchInputRef.current?.focus();
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -62,6 +68,26 @@ export default function PosClient({ products }: { products: Product[] }) {
     setCart((prev) => prev.filter((l) => l.product.id !== productId));
   }
 
+  function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const code = query.trim();
+    if (!code) return;
+
+    const exact = products.find((p) => p.sku.toLowerCase() === code.toLowerCase());
+    if (exact) {
+      if (exact.stock <= 0) {
+        setScanInfo(`Stok ${exact.name} habis.`);
+      } else {
+        addToCart(exact);
+        setScanInfo(`${exact.name} ditambahkan ke keranjang.`);
+      }
+      setQuery("");
+    } else {
+      setScanInfo(`Barcode/SKU "${code}" tidak ditemukan.`);
+    }
+  }
+
   function handleCheckout() {
     setError(null);
     startTransition(async () => {
@@ -91,11 +117,17 @@ export default function PosClient({ products }: { products: Product[] }) {
       <div>
         <h1 className="mb-4 text-2xl font-bold text-white">Kasir</h1>
         <input
+          ref={searchInputRef}
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Cari produk (nama / SKU)..."
-          className="mb-4 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-white outline-none focus:border-emerald-500"
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setScanInfo(null);
+          }}
+          onKeyDown={handleSearchKeyDown}
+          placeholder="Cari produk (nama / SKU) atau scan barcode..."
+          className="mb-2 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-white outline-none focus:border-emerald-500"
         />
+        <p className="mb-4 min-h-[1.25rem] text-sm text-neutral-400">{scanInfo}</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {filtered.map((product) => (
             <button
