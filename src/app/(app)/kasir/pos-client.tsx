@@ -25,7 +25,8 @@ export default function PosClient({ products }: { products: Product[] }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [discount, setDiscount] = useState(0);
   const [paid, setPaid] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "qris" | "transfer" | "debit">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "qris" | "transfer" | "debit" | "hutang">("cash");
+  const [customerName, setCustomerName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [scanInfo, setScanInfo] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -96,7 +97,8 @@ export default function PosClient({ products }: { products: Product[] }) {
           cart.map((l) => ({ productId: l.product.id, qty: l.qty })),
           paid,
           discount,
-          paymentMethod
+          paymentMethod,
+          customerName
         );
         router.push(`/struk/${saleId}`);
       } catch (e) {
@@ -105,9 +107,11 @@ export default function PosClient({ products }: { products: Product[] }) {
     });
   }
 
-  function selectPaymentMethod(method: "cash" | "qris" | "transfer" | "debit") {
+  function selectPaymentMethod(method: "cash" | "qris" | "transfer" | "debit" | "hutang") {
     setPaymentMethod(method);
-    if (method !== "cash") {
+    if (method === "hutang") {
+      setPaid(0);
+    } else if (method !== "cash") {
       setPaid(total);
     }
   }
@@ -191,13 +195,14 @@ export default function PosClient({ products }: { products: Product[] }) {
 
           <div>
             <p className="mb-1 text-gray-600">Metode Bayar</p>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-5 gap-2">
               {(
                 [
                   { value: "cash", label: "Cash" },
                   { value: "qris", label: "QRIS" },
                   { value: "transfer", label: "Transfer" },
                   { value: "debit", label: "Debit" },
+                  { value: "hutang", label: "Hutang" },
                 ] as const
               ).map((opt) => (
                 <button
@@ -215,39 +220,61 @@ export default function PosClient({ products }: { products: Product[] }) {
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-gray-600">
-            <span>Bayar</span>
-            <div className="flex items-center gap-2">
-              {paymentMethod === "cash" && (
-                <button
-                  onClick={() => setPaid(total)}
-                  className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-600 hover:border-emerald-500 hover:text-emerald-600"
-                >
-                  Uang Pas
-                </button>
-              )}
-              <input
-                id="paid-input"
-                type="number"
-                value={paid}
-                min={0}
-                disabled={paymentMethod !== "cash"}
-                onChange={(e) => setPaid(Number(e.target.value))}
-                className="w-28 rounded-md border border-gray-300 bg-white px-2 py-1 text-right text-gray-900 disabled:opacity-60"
-              />
+          {paymentMethod === "hutang" && (
+            <input
+              value={customerName}
+              onChange={(e) => setCustomerName(e.target.value)}
+              placeholder="Nama pelanggan (wajib untuk hutang)"
+              className="w-full rounded-md border border-gray-300 bg-white px-2 py-2 text-gray-900 outline-none focus:border-emerald-500"
+            />
+          )}
+
+          {paymentMethod === "hutang" ? (
+            <div className="flex justify-between rounded-lg bg-amber-50 px-3 py-2 text-amber-700">
+              <span>Status</span>
+              <span className="font-semibold">Hutang penuh {formatRupiah(total)}</span>
             </div>
-          </div>
-          <div className="flex justify-between text-gray-600">
-            <span>Kembalian</span>
-            <span className={change < 0 ? "text-red-600" : "text-emerald-600"}>{formatRupiah(Math.max(change, 0))}</span>
-          </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between text-gray-600">
+                <span>Bayar</span>
+                <div className="flex items-center gap-2">
+                  {paymentMethod === "cash" && (
+                    <button
+                      onClick={() => setPaid(total)}
+                      className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-600 hover:border-emerald-500 hover:text-emerald-600"
+                    >
+                      Uang Pas
+                    </button>
+                  )}
+                  <input
+                    id="paid-input"
+                    type="number"
+                    value={paid}
+                    min={0}
+                    disabled={paymentMethod !== "cash"}
+                    onChange={(e) => setPaid(Number(e.target.value))}
+                    className="w-28 rounded-md border border-gray-300 bg-white px-2 py-1 text-right text-gray-900 disabled:opacity-60"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-between text-gray-600">
+                <span>Kembalian</span>
+                <span className={change < 0 ? "text-red-600" : "text-emerald-600"}>{formatRupiah(Math.max(change, 0))}</span>
+              </div>
+            </>
+          )}
         </div>
 
         {error && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
 
         <button
           onClick={handleCheckout}
-          disabled={pending || cart.length === 0 || paid < total}
+          disabled={
+            pending ||
+            cart.length === 0 ||
+            (paymentMethod === "hutang" ? !customerName.trim() : paid < total)
+          }
           className="mt-4 w-full rounded-lg bg-emerald-600 px-3 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
         >
           {pending ? "Memproses..." : "Bayar & Cetak Struk"}

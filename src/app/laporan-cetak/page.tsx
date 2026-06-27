@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { formatBaliDate, formatBaliDateTime, getBaliDayRange } from "@/lib/datetime";
+import { formatBaliDateTime } from "@/lib/datetime";
+import { getDailyReport } from "@/lib/reports";
 import PrintButton from "@/app/struk/[id]/print-button";
 
 function formatRupiah(value: number) {
@@ -17,44 +17,8 @@ export default async function LaporanCetakPage({
   if (!user) redirect("/login");
 
   const { date } = await searchParams;
-  const { start, end } = getBaliDayRange(date);
-
-  const [sales, expenses] = await Promise.all([
-    db.sale.findMany({
-      where: { createdAt: { gte: start, lte: end } },
-      include: { items: { include: { product: true } } },
-      orderBy: { createdAt: "asc" },
-    }),
-    db.expense.findMany({
-      where: { createdAt: { gte: start, lte: end } },
-    }),
-  ]);
-
-  const ringkasan = {
-    cash: { count: 0, total: 0 },
-    qris: { count: 0, total: 0 },
-    transfer: { count: 0, total: 0 },
-    debit: { count: 0, total: 0 },
-  };
-
-  let totalPemasukan = 0;
-  let totalModal = 0;
-  let totalItemTerjual = 0;
-
-  for (const sale of sales) {
-    const key = (sale.paymentType in ringkasan ? sale.paymentType : "cash") as keyof typeof ringkasan;
-    ringkasan[key].count += 1;
-    ringkasan[key].total += sale.total;
-    totalPemasukan += sale.total;
-
-    for (const item of sale.items) {
-      totalItemTerjual += item.qty;
-      totalModal += item.product.costPrice * item.qty;
-    }
-  }
-
-  const totalPengeluaran = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const untungBersih = totalPemasukan - totalModal - totalPengeluaran;
+  const r = await getDailyReport(date);
+  const { ringkasan, totalPemasukan, totalModal, totalPengeluaran, untungBersih, totalItemTerjual, jumlahTransaksi, totalHutangBaru, totalPelunasanHutang } = r;
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-gray-100 py-8 print:bg-white print:py-0">
@@ -71,7 +35,7 @@ export default async function LaporanCetakPage({
         </div>
         <div className="my-2 border-t border-dashed border-black" />
         <p className="text-center font-bold">LAPORAN PENJUALAN HARIAN</p>
-        <p className="text-center">{formatBaliDate(start)}</p>
+        <p className="text-center">{r.tanggal}</p>
         <div className="my-2 border-t border-dashed border-black" />
 
         <div className="flex justify-between">
@@ -114,8 +78,20 @@ export default async function LaporanCetakPage({
         </div>
         <div className="flex justify-between">
           <span>Jumlah Transaksi</span>
-          <span>{sales.length}</span>
+          <span>{jumlahTransaksi}</span>
         </div>
+        {totalHutangBaru > 0 && (
+          <div className="flex justify-between">
+            <span>Hutang Baru</span>
+            <span>{formatRupiah(totalHutangBaru)}</span>
+          </div>
+        )}
+        {totalPelunasanHutang > 0 && (
+          <div className="flex justify-between">
+            <span>Pelunasan Hutang</span>
+            <span>{formatRupiah(totalPelunasanHutang)}</span>
+          </div>
+        )}
 
         <div className="my-2 border-t border-dashed border-black" />
         <p className="text-center">Dicetak: {formatBaliDateTime(new Date())} WITA</p>

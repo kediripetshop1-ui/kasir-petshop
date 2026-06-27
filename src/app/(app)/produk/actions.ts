@@ -22,7 +22,14 @@ export async function createProduct(formData: FormData) {
   revalidatePath("/produk");
 }
 
+/**
+ * Produk tidak benar-benar dihapus dari database karena terhubung ke riwayat
+ * transaksi/stok masuk — menghapusnya akan merusak laporan lama. Sebagai
+ * gantinya produk ditandai "archived" sehingga hilang dari daftar & kasir
+ * tapi riwayat penjualannya tetap aman.
+ */
 export async function deleteProduct(id: string) {
-  await db.product.delete({ where: { id } });
+  await db.product.update({ where: { id }, data: { archived: true } });
   revalidatePath("/produk");
+  revalidatePath("/kasir");
 }

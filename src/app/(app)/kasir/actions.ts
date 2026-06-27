@@ -11,12 +11,21 @@ function generateInvoiceNo() {
   return `INV${p.date}${p.month}${p.year}${p.hour}${p.minute}${p.second}`;
 }
 
-type PaymentMethod = "cash" | "qris" | "transfer" | "debit";
+type PaymentMethod = "cash" | "qris" | "transfer" | "debit" | "hutang";
 
-export async function checkout(items: CartItem[], paid: number, discount: number, paymentType: PaymentMethod = "cash") {
+export async function checkout(
+  items: CartItem[],
+  paid: number,
+  discount: number,
+  paymentType: PaymentMethod = "cash",
+  customerName?: string
+) {
   const user = await getCurrentUser();
   if (!user) throw new Error("Tidak terautentikasi");
   if (items.length === 0) throw new Error("Keranjang kosong");
+  if (paymentType === "hutang" && !customerName?.trim()) {
+    throw new Error("Nama pelanggan wajib diisi untuk transaksi hutang");
+  }
 
   const products = await db.product.findMany({
     where: { id: { in: items.map((i) => i.productId) } },
@@ -35,8 +44,11 @@ export async function checkout(items: CartItem[], paid: number, discount: number
   });
 
   const total = Math.max(subtotal - discount, 0);
-  if (paid < total) throw new Error("Pembayaran kurang dari total");
-  const change = paid - total;
+  // Transaksi hutang: belum ada uang masuk sama sekali, dilunasi belakangan via halaman Hutang.
+  const isHutang = paymentType === "hutang";
+  if (!isHutang && paid < total) throw new Error("Pembayaran kurang dari total");
+  const actualPaid = isHutang ? 0 : paid;
+  const change = actualPaid - total;
 
   const invoiceNo = generateInvoiceNo();
 
@@ -45,11 +57,12 @@ export async function checkout(items: CartItem[], paid: number, discount: number
       data: {
         invoiceNo,
         cashierName: user.name,
+        customerName: customerName?.trim() || null,
         subtotal,
         discount,
         total,
-        paid,
-        change,
+        paid: actualPaid,
+        change: Math.max(change, 0),
         paymentType,
         items: {
           create: lineItems.map((li) => ({

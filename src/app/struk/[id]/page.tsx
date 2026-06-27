@@ -11,6 +11,7 @@ function paymentLabel(method: string) {
   if (method === "qris") return "QRIS";
   if (method === "transfer") return "Transfer";
   if (method === "debit") return "Debit";
+  if (method === "hutang") return "Hutang";
   return "Cash";
 }
 
@@ -41,6 +42,7 @@ export default async function StrukPage({ params }: { params: Promise<{ id: stri
         <p>No. Invoice: {sale.invoiceNo}</p>
         <p>Kasir: {sale.cashierName}</p>
         <p>Metode Bayar: {paymentLabel(sale.paymentType)}</p>
+        {sale.customerName && <p>Pelanggan: {sale.customerName}</p>}
         <div className="my-2 border-t border-dashed border-black" />
 
         {sale.items.map((item) => (
@@ -68,14 +70,23 @@ export default async function StrukPage({ params }: { params: Promise<{ id: stri
           <span>TOTAL</span>
           <span>{formatRupiah(sale.total)}</span>
         </div>
-        <div className="flex justify-between">
-          <span>Bayar</span>
-          <span>{formatRupiah(sale.paid)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Kembali</span>
-          <span>{formatRupiah(sale.change)}</span>
-        </div>
+        {sale.paymentType === "hutang" ? (
+          <div className="flex justify-between font-bold">
+            <span>BELUM DIBAYAR</span>
+            <span>{formatRupiah(sale.total)}</span>
+          </div>
+        ) : (
+          <>
+            <div className="flex justify-between">
+              <span>Bayar</span>
+              <span>{formatRupiah(sale.paid)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Kembali</span>
+              <span>{formatRupiah(sale.change)}</span>
+            </div>
+          </>
+        )}
 
         <div className="my-2 border-t border-dashed border-black" />
         <p className="text-center">Terima kasih telah berbelanja!</p>

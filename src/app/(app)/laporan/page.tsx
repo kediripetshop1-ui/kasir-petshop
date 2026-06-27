@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { formatBaliDateTime, getBaliDateKey, getBaliDayRange } from "@/lib/datetime";
+import { formatBaliDateTime } from "@/lib/datetime";
+import { getDailyReport } from "@/lib/reports";
 import KirimWaButton from "./kirim-wa-button";
+import DeleteSaleButton from "./delete-sale-button";
 
 function formatRupiah(value: number) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
@@ -11,42 +13,19 @@ function paymentLabel(method: string) {
   if (method === "qris") return "QRIS";
   if (method === "transfer") return "Transfer";
   if (method === "debit") return "Debit";
+  if (method === "hutang") return "Hutang";
   return "Cash";
 }
 
 export default async function LaporanPage() {
-  const { start, end } = getBaliDayRange();
-
-  const [sales, expensesHariIni] = await Promise.all([
+  const [sales, report] = await Promise.all([
     db.sale.findMany({
       orderBy: { createdAt: "desc" },
       take: 50,
       include: { items: true },
     }),
-    db.expense.findMany({
-      where: { createdAt: { gte: start, lte: end } },
-      orderBy: { createdAt: "desc" },
-    }),
+    getDailyReport(),
   ]);
-
-  const todayKey = getBaliDateKey(new Date());
-  const salesHariIni = sales.filter((s) => getBaliDateKey(s.createdAt) === todayKey);
-
-  const ringkasan = {
-    cash: { count: 0, total: 0 },
-    qris: { count: 0, total: 0 },
-    transfer: { count: 0, total: 0 },
-    debit: { count: 0, total: 0 },
-  };
-
-  for (const s of salesHariIni) {
-    const key = (s.paymentType in ringkasan ? s.paymentType : "cash") as keyof typeof ringkasan;
-    ringkasan[key].count += 1;
-    ringkasan[key].total += s.total;
-  }
-
-  const totalHariIni = salesHariIni.reduce((sum, s) => sum + s.total, 0);
-  const totalPengeluaranHariIni = expensesHariIni.reduce((sum, e) => sum + e.amount, 0);
 
   return (
     <div className="space-y-6">
@@ -54,8 +33,13 @@ export default async function LaporanPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Laporan Penjualan</h1>
           <p className="text-sm text-gray-500">
-            Total hari ini: <span className="font-semibold text-emerald-600">{formatRupiah(totalHariIni)}</span>
-            {" · "}Pengeluaran: <span className="font-semibold text-red-600">{formatRupiah(totalPengeluaranHariIni)}</span>
+            Pemasukan hari ini: <span className="font-semibold text-emerald-600">{formatRupiah(report.totalPemasukan)}</span>
+            {" · "}Pengeluaran: <span className="font-semibold text-red-600">{formatRupiah(report.totalPengeluaran)}</span>
+            {report.totalHutangBaru > 0 && (
+              <>
+                {" · "}Hutang baru: <span className="font-semibold text-amber-600">{formatRupiah(report.totalHutangBaru)}</span>
+              </>
+            )}
           </p>
         </div>
         <div className="flex items-start gap-2">
@@ -75,25 +59,31 @@ export default async function LaporanPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <p className="text-sm text-gray-500">Cash</p>
-            <p className="mt-1 text-xl font-bold text-gray-900">{formatRupiah(ringkasan.cash.total)}</p>
-            <p className="text-xs text-gray-400">{ringkasan.cash.count} transaksi</p>
+            <p className="mt-1 text-xl font-bold text-gray-900">{formatRupiah(report.ringkasan.cash.total)}</p>
+            <p className="text-xs text-gray-400">{report.ringkasan.cash.count} transaksi</p>
           </div>
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <p className="text-sm text-gray-500">QRIS</p>
-            <p className="mt-1 text-xl font-bold text-gray-900">{formatRupiah(ringkasan.qris.total)}</p>
-            <p className="text-xs text-gray-400">{ringkasan.qris.count} transaksi</p>
+            <p className="mt-1 text-xl font-bold text-gray-900">{formatRupiah(report.ringkasan.qris.total)}</p>
+            <p className="text-xs text-gray-400">{report.ringkasan.qris.count} transaksi</p>
           </div>
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <p className="text-sm text-gray-500">Transfer</p>
-            <p className="mt-1 text-xl font-bold text-gray-900">{formatRupiah(ringkasan.transfer.total)}</p>
-            <p className="text-xs text-gray-400">{ringkasan.transfer.count} transaksi</p>
+            <p className="mt-1 text-xl font-bold text-gray-900">{formatRupiah(report.ringkasan.transfer.total)}</p>
+            <p className="text-xs text-gray-400">{report.ringkasan.transfer.count} transaksi</p>
           </div>
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <p className="text-sm text-gray-500">Debit</p>
-            <p className="mt-1 text-xl font-bold text-gray-900">{formatRupiah(ringkasan.debit.total)}</p>
-            <p className="text-xs text-gray-400">{ringkasan.debit.count} transaksi</p>
+            <p className="mt-1 text-xl font-bold text-gray-900">{formatRupiah(report.ringkasan.debit.total)}</p>
+            <p className="text-xs text-gray-400">{report.ringkasan.debit.count} transaksi</p>
           </div>
         </div>
+        {report.totalPelunasanHutang > 0 && (
+          <p className="mt-2 text-sm text-gray-500">
+            Termasuk pelunasan hutang hari ini: <span className="font-medium text-emerald-600">{formatRupiah(report.totalPelunasanHutang)}</span>{" "}
+            (<Link href="/hutang" className="text-emerald-600 hover:underline">lihat detail</Link>)
+          </p>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -119,7 +109,11 @@ export default async function LaporanPage() {
                 <td className="px-3 py-2 text-right">{s.items.length}</td>
                 <td className="px-3 py-2 text-right">{formatRupiah(s.total)}</td>
                 <td className="px-3 py-2 text-right">
-                  <Link href={`/struk/${s.id}`} className="text-emerald-600 hover:text-emerald-700">Lihat Struk</Link>
+                  <div className="flex justify-end gap-3">
+                    <Link href={`/struk/${s.id}`} className="text-emerald-600 hover:text-emerald-700">Struk</Link>
+                    <Link href={`/laporan/${s.id}/edit`} className="text-blue-600 hover:text-blue-700">Edit</Link>
+                    <DeleteSaleButton saleId={s.id} invoiceNo={s.invoiceNo} />
+                  </div>
                 </td>
               </tr>
             ))}

@@ -15,18 +15,27 @@ export type DailyReport = {
   untungBersih: number;
   totalItemTerjual: number;
   jumlahTransaksi: number;
+  totalHutangBaru: number;
+  totalPelunasanHutang: number;
 };
 
-/** Hitung laporan harian (zona WITA). Default hari ini. */
+/**
+ * Hitung laporan harian (zona WITA). Default hari ini.
+ * Transaksi "hutang" tidak dihitung sebagai pemasukan saat penjualan (uang belum masuk),
+ * tapi modal/stok sudah keluar sehingga tetap mengurangi untung bersih hari itu.
+ * Pelunasan hutang (DebtPayment) dihitung sebagai pemasukan pada hari pelunasan terjadi,
+ * sesuai metode bayar yang dipakai saat melunasi — meski transaksi aslinya di hari lain.
+ */
 export async function getDailyReport(dateKey?: string): Promise<DailyReport> {
   const { start, end } = getBaliDayRange(dateKey);
 
-  const [sales, expenses] = await Promise.all([
+  const [sales, expenses, debtPayments] = await Promise.all([
     db.sale.findMany({
       where: { createdAt: { gte: start, lte: end } },
       include: { items: { include: { product: true } } },
     }),
     db.expense.findMany({ where: { createdAt: { gte: start, lte: end } } }),
+    db.debtPayment.findMany({ where: { createdAt: { gte: start, lte: end } } }),
   ]);
 
   const ringkasan = {
@@ -39,16 +48,32 @@ export async function getDailyReport(dateKey?: string): Promise<DailyReport> {
   let totalPemasukan = 0;
   let totalModal = 0;
   let totalItemTerjual = 0;
+  let totalHutangBaru = 0;
 
   for (const sale of sales) {
-    const key = (sale.paymentType in ringkasan ? sale.paymentType : "cash") as keyof typeof ringkasan;
-    ringkasan[key].count += 1;
-    ringkasan[key].total += sale.total;
-    totalPemasukan += sale.total;
     for (const item of sale.items) {
       totalItemTerjual += item.qty;
       totalModal += item.product.costPrice * item.qty;
     }
+
+    if (sale.paymentType === "hutang") {
+      totalHutangBaru += sale.total;
+      continue;
+    }
+
+    const key = (sale.paymentType in ringkasan ? sale.paymentType : "cash") as keyof typeof ringkasan;
+    ringkasan[key].count += 1;
+    ringkasan[key].total += sale.total;
+    totalPemasukan += sale.total;
+  }
+
+  let totalPelunasanHutang = 0;
+  for (const payment of debtPayments) {
+    const key = (payment.method in ringkasan ? payment.method : "cash") as keyof typeof ringkasan;
+    ringkasan[key].count += 1;
+    ringkasan[key].total += payment.amount;
+    totalPemasukan += payment.amount;
+    totalPelunasanHutang += payment.amount;
   }
 
   const totalPengeluaran = expenses.reduce((sum, e) => sum + e.amount, 0);
@@ -63,6 +88,8 @@ export async function getDailyReport(dateKey?: string): Promise<DailyReport> {
     untungBersih: totalPemasukan - totalModal - totalPengeluaran,
     totalItemTerjual,
     jumlahTransaksi: sales.length,
+    totalHutangBaru,
+    totalPelunasanHutang,
   };
 }
 
@@ -84,6 +111,8 @@ export function formatDailyReportText(r: DailyReport): string {
     ``,
     `Item terjual  : ${r.totalItemTerjual} pcs`,
     `Transaksi     : ${r.jumlahTransaksi}`,
+    ...(r.totalHutangBaru > 0 ? [`Hutang baru   : ${rp(r.totalHutangBaru)}`] : []),
+    ...(r.totalPelunasanHutang > 0 ? [`Pelunasan hutang: ${rp(r.totalPelunasanHutang)}`] : []),
   ].join("\n");
 }
 

@@ -7,6 +7,7 @@ const NAV = [
   { href: "/kasir", label: "Kasir" },
   { href: "/produk", label: "Produk" },
   { href: "/stok-masuk", label: "Stok Masuk" },
+  { href: "/hutang", label: "Hutang" },
   { href: "/pengeluaran", label: "Pengeluaran" },
   { href: "/laporan", label: "Laporan" },
 ];

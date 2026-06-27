@@ -7,7 +7,7 @@ function formatRupiah(value: number) {
 
 export default async function ProdukPage() {
   const [products, categories] = await Promise.all([
-    db.product.findMany({ include: { category: true }, orderBy: { name: "asc" } }),
+    db.product.findMany({ where: { archived: false }, include: { category: true }, orderBy: { name: "asc" } }),
     db.category.findMany({ orderBy: { name: "asc" } }),
   ]);
 
