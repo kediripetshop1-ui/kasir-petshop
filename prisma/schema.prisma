@@ -82,3 +82,11 @@ model SaleItem {
   price     Int
   subtotal  Int
 }
+
+model Expense {
+  id          String   @id @default(cuid())
+  amount      Int
+  note        String?
+  cashierName String
+  createdAt   DateTime @default(now())
+}

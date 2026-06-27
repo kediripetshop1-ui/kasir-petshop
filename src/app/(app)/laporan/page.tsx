@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { formatBaliDateTime, getBaliDateKey, getBaliDayRange } from "@/lib/datetime";
 
 function formatRupiah(value: number) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
@@ -8,22 +9,33 @@ function formatRupiah(value: number) {
 function paymentLabel(method: string) {
   if (method === "qris") return "QRIS";
   if (method === "transfer") return "Transfer";
+  if (method === "debit") return "Debit";
   return "Cash";
 }
 
 export default async function LaporanPage() {
-  const sales = await db.sale.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 50,
-    include: { items: true },
-  });
+  const { start, end } = getBaliDayRange();
 
-  const salesHariIni = sales.filter((s) => s.createdAt.toDateString() === new Date().toDateString());
+  const [sales, expensesHariIni] = await Promise.all([
+    db.sale.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: { items: true },
+    }),
+    db.expense.findMany({
+      where: { createdAt: { gte: start, lte: end } },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
+
+  const todayKey = getBaliDateKey(new Date());
+  const salesHariIni = sales.filter((s) => getBaliDateKey(s.createdAt) === todayKey);
 
   const ringkasan = {
     cash: { count: 0, total: 0 },
     qris: { count: 0, total: 0 },
     transfer: { count: 0, total: 0 },
+    debit: { count: 0, total: 0 },
   };
 
   for (const s of salesHariIni) {
@@ -33,6 +45,7 @@ export default async function LaporanPage() {
   }
 
   const totalHariIni = salesHariIni.reduce((sum, s) => sum + s.total, 0);
+  const totalPengeluaranHariIni = expensesHariIni.reduce((sum, e) => sum + e.amount, 0);
 
   return (
     <div className="space-y-6">
@@ -41,6 +54,7 @@ export default async function LaporanPage() {
           <h1 className="text-2xl font-bold text-gray-900">Laporan Penjualan</h1>
           <p className="text-sm text-gray-500">
             Total hari ini: <span className="font-semibold text-emerald-600">{formatRupiah(totalHariIni)}</span>
+            {" · "}Pengeluaran: <span className="font-semibold text-red-600">{formatRupiah(totalPengeluaranHariIni)}</span>
           </p>
         </div>
         <Link
@@ -54,7 +68,7 @@ export default async function LaporanPage() {
 
       <div>
         <h2 className="mb-2 text-lg font-semibold text-gray-900">Ringkasan Tutup Shift (Hari Ini)</h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
             <p className="text-sm text-gray-500">Cash</p>
             <p className="mt-1 text-xl font-bold text-gray-900">{formatRupiah(ringkasan.cash.total)}</p>
@@ -69,6 +83,11 @@ export default async function LaporanPage() {
             <p className="text-sm text-gray-500">Transfer</p>
             <p className="mt-1 text-xl font-bold text-gray-900">{formatRupiah(ringkasan.transfer.total)}</p>
             <p className="text-xs text-gray-400">{ringkasan.transfer.count} transaksi</p>
+          </div>
+          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <p className="text-sm text-gray-500">Debit</p>
+            <p className="mt-1 text-xl font-bold text-gray-900">{formatRupiah(ringkasan.debit.total)}</p>
+            <p className="text-xs text-gray-400">{ringkasan.debit.count} transaksi</p>
           </div>
         </div>
       </div>
@@ -90,7 +109,7 @@ export default async function LaporanPage() {
             {sales.map((s) => (
               <tr key={s.id} className="border-t border-gray-100 text-gray-700">
                 <td className="px-3 py-2">{s.invoiceNo}</td>
-                <td className="px-3 py-2 text-gray-500">{s.createdAt.toLocaleString("id-ID")}</td>
+                <td className="px-3 py-2 text-gray-500">{formatBaliDateTime(s.createdAt)}</td>
                 <td className="px-3 py-2 text-gray-900">{s.cashierName}</td>
                 <td className="px-3 py-2">{paymentLabel(s.paymentType)}</td>
                 <td className="px-3 py-2 text-right">{s.items.length}</td>

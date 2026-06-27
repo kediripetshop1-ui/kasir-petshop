@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { formatBaliDateTime } from "@/lib/datetime";
 import PrintButton from "./print-button";
 
 function formatRupiah(value: number) {
@@ -9,6 +10,7 @@ function formatRupiah(value: number) {
 function paymentLabel(method: string) {
   if (method === "qris") return "QRIS";
   if (method === "transfer") return "Transfer";
+  if (method === "debit") return "Debit";
   return "Cash";
 }
 
@@ -33,7 +35,7 @@ export default async function StrukPage({ params }: { params: Promise<{ id: stri
           <p className="text-base font-bold">Kediri Petshop</p>
           <p>Jl. Kediri No.31B, Tuban, Kec. Kuta,</p>
           <p>Kabupaten Badung, Bali 80361</p>
-          <p>{new Date(sale.createdAt).toLocaleString("id-ID")}</p>
+          <p>{formatBaliDateTime(sale.createdAt)} WITA</p>
         </div>
         <div className="my-2 border-t border-dashed border-black" />
         <p>No. Invoice: {sale.invoiceNo}</p>

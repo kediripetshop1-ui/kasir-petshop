@@ -25,7 +25,7 @@ export default function PosClient({ products }: { products: Product[] }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [discount, setDiscount] = useState(0);
   const [paid, setPaid] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "qris" | "transfer">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "qris" | "transfer" | "debit">("cash");
   const [error, setError] = useState<string | null>(null);
   const [scanInfo, setScanInfo] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -105,7 +105,7 @@ export default function PosClient({ products }: { products: Product[] }) {
     });
   }
 
-  function selectPaymentMethod(method: "cash" | "qris" | "transfer") {
+  function selectPaymentMethod(method: "cash" | "qris" | "transfer" | "debit") {
     setPaymentMethod(method);
     if (method !== "cash") {
       setPaid(total);
@@ -191,12 +191,13 @@ export default function PosClient({ products }: { products: Product[] }) {
 
           <div>
             <p className="mb-1 text-gray-600">Metode Bayar</p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               {(
                 [
                   { value: "cash", label: "Cash" },
                   { value: "qris", label: "QRIS" },
                   { value: "transfer", label: "Transfer" },
+                  { value: "debit", label: "Debit" },
                 ] as const
               ).map((opt) => (
                 <button

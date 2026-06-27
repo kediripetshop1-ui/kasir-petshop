@@ -2,22 +2,16 @@
 
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { getBaliDateTimeParts } from "@/lib/datetime";
 
 type CartItem = { productId: string; qty: number };
 
 function generateInvoiceNo() {
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const date = pad(now.getDate());
-  const month = pad(now.getMonth() + 1);
-  const year = now.getFullYear();
-  const hour = pad(now.getHours());
-  const minute = pad(now.getMinutes());
-  const second = pad(now.getSeconds());
-  return `INV${date}${month}${year}${hour}${minute}${second}`;
+  const p = getBaliDateTimeParts(new Date());
+  return `INV${p.date}${p.month}${p.year}${p.hour}${p.minute}${p.second}`;
 }
 
-type PaymentMethod = "cash" | "qris" | "transfer";
+type PaymentMethod = "cash" | "qris" | "transfer" | "debit";
 
 export async function checkout(items: CartItem[], paid: number, discount: number, paymentType: PaymentMethod = "cash") {
   const user = await getCurrentUser();
