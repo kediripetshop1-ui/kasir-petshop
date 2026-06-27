@@ -115,7 +115,7 @@ export default function PosClient({ products }: { products: Product[] }) {
   return (
     <div className="grid h-full grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
       <div>
-        <h1 className="mb-4 text-2xl font-bold text-white">Kasir</h1>
+        <h1 className="mb-4 text-2xl font-bold text-gray-900">Kasir</h1>
         <input
           ref={searchInputRef}
           value={query}
@@ -125,33 +125,33 @@ export default function PosClient({ products }: { products: Product[] }) {
           }}
           onKeyDown={handleSearchKeyDown}
           placeholder="Cari produk (nama / SKU) atau scan barcode..."
-          className="mb-2 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-white outline-none focus:border-emerald-500"
+          className="mb-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
         />
-        <p className="mb-4 min-h-[1.25rem] text-sm text-neutral-400">{scanInfo}</p>
+        <p className="mb-4 min-h-[1.25rem] text-sm text-gray-500">{scanInfo}</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {filtered.map((product) => (
             <button
               key={product.id}
               onClick={() => addToCart(product)}
-              className="flex flex-col rounded-xl border border-neutral-800 bg-neutral-900 p-3 text-left transition hover:border-emerald-600"
+              className="flex flex-col rounded-lg border border-gray-200 bg-white p-3 text-left shadow-sm transition hover:border-emerald-500 hover:shadow"
             >
-              <span className="text-sm font-medium text-white">{product.name}</span>
-              <span className="mt-1 text-xs text-neutral-500">{product.sku} · stok {product.stock} {product.unit}</span>
-              <span className="mt-2 text-sm font-semibold text-emerald-400">{formatRupiah(product.sellPrice)}</span>
+              <span className="text-sm font-medium text-gray-900">{product.name}</span>
+              <span className="mt-1 text-xs text-gray-500">{product.sku} · stok {product.stock} {product.unit}</span>
+              <span className="mt-2 text-sm font-semibold text-emerald-600">{formatRupiah(product.sellPrice)}</span>
             </button>
           ))}
-          {filtered.length === 0 && <p className="col-span-full text-neutral-500">Produk tidak ditemukan.</p>}
+          {filtered.length === 0 && <p className="col-span-full text-gray-500">Produk tidak ditemukan.</p>}
         </div>
       </div>
 
-      <div className="flex flex-col rounded-xl border border-neutral-800 bg-neutral-900 p-4">
-        <h2 className="mb-3 text-lg font-semibold text-white">Keranjang</h2>
+      <div className="flex flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+        <h2 className="mb-3 text-lg font-semibold text-gray-900">Keranjang</h2>
         <div className="flex-1 space-y-2 overflow-y-auto">
           {cart.map((line) => (
-            <div key={line.product.id} className="flex items-center justify-between gap-2 rounded-lg bg-neutral-800 px-3 py-2">
+            <div key={line.product.id} className="flex items-center justify-between gap-2 rounded-lg bg-gray-50 px-3 py-2">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-white">{line.product.name}</p>
-                <p className="text-xs text-neutral-400">{formatRupiah(line.product.sellPrice)}</p>
+                <p className="truncate text-sm text-gray-900">{line.product.name}</p>
+                <p className="text-xs text-gray-500">{formatRupiah(line.product.sellPrice)}</p>
               </div>
               <input
                 type="number"
@@ -159,38 +159,38 @@ export default function PosClient({ products }: { products: Product[] }) {
                 min={0}
                 max={line.product.stock}
                 onChange={(e) => updateQty(line.product.id, Number(e.target.value))}
-                className="w-16 rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-center text-white"
+                className="w-16 rounded-md border border-gray-300 bg-white px-2 py-1 text-center text-gray-900"
               />
-              <button onClick={() => removeLine(line.product.id)} className="text-red-400 hover:text-red-300">
+              <button onClick={() => removeLine(line.product.id)} className="text-red-500 hover:text-red-600">
                 ✕
               </button>
             </div>
           ))}
-          {cart.length === 0 && <p className="text-sm text-neutral-500">Keranjang masih kosong.</p>}
+          {cart.length === 0 && <p className="text-sm text-gray-500">Keranjang masih kosong.</p>}
         </div>
 
-        <div className="mt-4 space-y-2 border-t border-neutral-800 pt-3 text-sm">
-          <div className="flex justify-between text-neutral-300">
+        <div className="mt-4 space-y-2 border-t border-gray-200 pt-3 text-sm">
+          <div className="flex justify-between text-gray-600">
             <span>Subtotal</span>
             <span>{formatRupiah(subtotal)}</span>
           </div>
-          <div className="flex items-center justify-between text-neutral-300">
+          <div className="flex items-center justify-between text-gray-600">
             <span>Diskon</span>
             <input
               type="number"
               value={discount}
               min={0}
               onChange={(e) => setDiscount(Number(e.target.value))}
-              className="w-28 rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-right text-white"
+              className="w-28 rounded-md border border-gray-300 bg-white px-2 py-1 text-right text-gray-900"
             />
           </div>
-          <div className="flex justify-between text-base font-semibold text-white">
+          <div className="flex justify-between text-base font-semibold text-gray-900">
             <span>Total</span>
             <span>{formatRupiah(total)}</span>
           </div>
 
           <div>
-            <p className="mb-1 text-neutral-300">Metode Bayar</p>
+            <p className="mb-1 text-gray-600">Metode Bayar</p>
             <div className="grid grid-cols-3 gap-2">
               {(
                 [
@@ -205,7 +205,7 @@ export default function PosClient({ products }: { products: Product[] }) {
                   className={`rounded-lg border px-2 py-2 text-sm font-medium transition ${
                     paymentMethod === opt.value
                       ? "border-emerald-600 bg-emerald-600 text-white"
-                      : "border-neutral-700 bg-neutral-800 text-neutral-300 hover:border-neutral-500"
+                      : "border-gray-300 bg-white text-gray-600 hover:border-gray-400"
                   }`}
                 >
                   {opt.label}
@@ -214,13 +214,13 @@ export default function PosClient({ products }: { products: Product[] }) {
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-neutral-300">
+          <div className="flex items-center justify-between text-gray-600">
             <span>Bayar</span>
             <div className="flex items-center gap-2">
               {paymentMethod === "cash" && (
                 <button
                   onClick={() => setPaid(total)}
-                  className="rounded-md border border-neutral-700 bg-neutral-800 px-2 py-1 text-xs text-neutral-300 hover:border-emerald-600 hover:text-white"
+                  className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-600 hover:border-emerald-500 hover:text-emerald-600"
                 >
                   Uang Pas
                 </button>
@@ -232,22 +232,22 @@ export default function PosClient({ products }: { products: Product[] }) {
                 min={0}
                 disabled={paymentMethod !== "cash"}
                 onChange={(e) => setPaid(Number(e.target.value))}
-                className="w-28 rounded-md border border-neutral-700 bg-neutral-900 px-2 py-1 text-right text-white disabled:opacity-60"
+                className="w-28 rounded-md border border-gray-300 bg-white px-2 py-1 text-right text-gray-900 disabled:opacity-60"
               />
             </div>
           </div>
-          <div className="flex justify-between text-neutral-300">
+          <div className="flex justify-between text-gray-600">
             <span>Kembalian</span>
-            <span className={change < 0 ? "text-red-400" : "text-emerald-400"}>{formatRupiah(Math.max(change, 0))}</span>
+            <span className={change < 0 ? "text-red-600" : "text-emerald-600"}>{formatRupiah(Math.max(change, 0))}</span>
           </div>
         </div>
 
-        {error && <p className="mt-3 rounded-lg bg-red-950 px-3 py-2 text-sm text-red-300">{error}</p>}
+        {error && <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
 
         <button
           onClick={handleCheckout}
           disabled={pending || cart.length === 0 || paid < total}
-          className="mt-4 w-full rounded-lg bg-emerald-600 px-3 py-3 font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-50"
+          className="mt-4 w-full rounded-lg bg-emerald-600 px-3 py-3 font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
         >
           {pending ? "Memproses..." : "Bayar & Cetak Struk"}
         </button>

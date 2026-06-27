@@ -38,71 +38,71 @@ export default async function LaporanPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Laporan Penjualan</h1>
-          <p className="text-sm text-neutral-400">
-            Total hari ini: <span className="font-semibold text-emerald-400">{formatRupiah(totalHariIni)}</span>
+          <h1 className="text-2xl font-bold text-gray-900">Laporan Penjualan</h1>
+          <p className="text-sm text-gray-500">
+            Total hari ini: <span className="font-semibold text-emerald-600">{formatRupiah(totalHariIni)}</span>
           </p>
         </div>
         <Link
           href="/laporan-cetak"
           target="_blank"
-          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
         >
           Cetak Laporan Harian
         </Link>
       </div>
 
       <div>
-        <h2 className="mb-2 text-lg font-semibold text-white">Ringkasan Tutup Shift (Hari Ini)</h2>
+        <h2 className="mb-2 text-lg font-semibold text-gray-900">Ringkasan Tutup Shift (Hari Ini)</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
-            <p className="text-sm text-neutral-400">Cash</p>
-            <p className="mt-1 text-xl font-bold text-white">{formatRupiah(ringkasan.cash.total)}</p>
-            <p className="text-xs text-neutral-500">{ringkasan.cash.count} transaksi</p>
+          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <p className="text-sm text-gray-500">Cash</p>
+            <p className="mt-1 text-xl font-bold text-gray-900">{formatRupiah(ringkasan.cash.total)}</p>
+            <p className="text-xs text-gray-400">{ringkasan.cash.count} transaksi</p>
           </div>
-          <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
-            <p className="text-sm text-neutral-400">QRIS</p>
-            <p className="mt-1 text-xl font-bold text-white">{formatRupiah(ringkasan.qris.total)}</p>
-            <p className="text-xs text-neutral-500">{ringkasan.qris.count} transaksi</p>
+          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <p className="text-sm text-gray-500">QRIS</p>
+            <p className="mt-1 text-xl font-bold text-gray-900">{formatRupiah(ringkasan.qris.total)}</p>
+            <p className="text-xs text-gray-400">{ringkasan.qris.count} transaksi</p>
           </div>
-          <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
-            <p className="text-sm text-neutral-400">Transfer</p>
-            <p className="mt-1 text-xl font-bold text-white">{formatRupiah(ringkasan.transfer.total)}</p>
-            <p className="text-xs text-neutral-500">{ringkasan.transfer.count} transaksi</p>
+          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+            <p className="text-sm text-gray-500">Transfer</p>
+            <p className="mt-1 text-xl font-bold text-gray-900">{formatRupiah(ringkasan.transfer.total)}</p>
+            <p className="text-xs text-gray-400">{ringkasan.transfer.count} transaksi</p>
           </div>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-neutral-800">
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-900 text-neutral-400">
+          <thead className="bg-gray-50 text-gray-500">
             <tr>
-              <th className="px-3 py-2 text-left">Invoice</th>
-              <th className="px-3 py-2 text-left">Waktu</th>
-              <th className="px-3 py-2 text-left">Kasir</th>
-              <th className="px-3 py-2 text-left">Metode</th>
-              <th className="px-3 py-2 text-right">Item</th>
-              <th className="px-3 py-2 text-right">Total</th>
+              <th className="px-3 py-2 text-left font-medium">Invoice</th>
+              <th className="px-3 py-2 text-left font-medium">Waktu</th>
+              <th className="px-3 py-2 text-left font-medium">Kasir</th>
+              <th className="px-3 py-2 text-left font-medium">Metode</th>
+              <th className="px-3 py-2 text-right font-medium">Item</th>
+              <th className="px-3 py-2 text-right font-medium">Total</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
           <tbody>
             {sales.map((s) => (
-              <tr key={s.id} className="border-t border-neutral-800 text-neutral-200">
+              <tr key={s.id} className="border-t border-gray-100 text-gray-700">
                 <td className="px-3 py-2">{s.invoiceNo}</td>
-                <td className="px-3 py-2 text-neutral-400">{s.createdAt.toLocaleString("id-ID")}</td>
-                <td className="px-3 py-2">{s.cashierName}</td>
+                <td className="px-3 py-2 text-gray-500">{s.createdAt.toLocaleString("id-ID")}</td>
+                <td className="px-3 py-2 text-gray-900">{s.cashierName}</td>
                 <td className="px-3 py-2">{paymentLabel(s.paymentType)}</td>
                 <td className="px-3 py-2 text-right">{s.items.length}</td>
                 <td className="px-3 py-2 text-right">{formatRupiah(s.total)}</td>
                 <td className="px-3 py-2 text-right">
-                  <Link href={`/struk/${s.id}`} className="text-emerald-400 hover:text-emerald-300">Lihat Struk</Link>
+                  <Link href={`/struk/${s.id}`} className="text-emerald-600 hover:text-emerald-700">Lihat Struk</Link>
                 </td>
               </tr>
             ))}
             {sales.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-3 py-6 text-center text-neutral-500">Belum ada transaksi.</td>
+                <td colSpan={7} className="px-3 py-6 text-center text-gray-400">Belum ada transaksi.</td>
               </tr>
             )}
           </tbody>

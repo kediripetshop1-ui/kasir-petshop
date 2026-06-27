@@ -66,11 +66,11 @@ export default async function LaporanCetakPage({
   const untungBersih = totalPemasukan - totalModal;
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-neutral-950 py-8 print:bg-white print:py-0">
+    <div className="flex min-h-screen flex-col items-center bg-gray-100 py-8 print:bg-white print:py-0">
       <PrintButton />
       <div
         id="struk"
-        className="w-[80mm] bg-white px-3 py-4 text-black"
+        className="w-[80mm] bg-white px-3 py-4 text-black shadow-sm print:shadow-none"
         style={{ fontFamily: "'Courier New', monospace", fontSize: "12px" }}
       >
         <div className="text-center">
