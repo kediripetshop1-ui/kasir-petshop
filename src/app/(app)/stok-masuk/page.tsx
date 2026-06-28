@@ -1,9 +1,10 @@
 import { db } from "@/lib/db";
+import { productDisplayName } from "@/lib/product";
 import { addStock } from "./actions";
 
 export default async function StokMasukPage() {
   const [products, logs] = await Promise.all([
-    db.product.findMany({ orderBy: { name: "asc" } }),
+    db.product.findMany({ where: { archived: false }, orderBy: { name: "asc" } }),
     db.stockLog.findMany({
       where: { reason: "nota_masuk" },
       include: { product: true },
@@ -25,7 +26,7 @@ export default async function StokMasukPage() {
         <select name="productId" required className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-emerald-500 md:col-span-2">
           <option value="">Pilih produk</option>
           {products.map((p) => (
-            <option key={p.id} value={p.id}>{p.name} ({p.sku})</option>
+            <option key={p.id} value={p.id}>{productDisplayName(p)} ({p.sku})</option>
           ))}
         </select>
         <input name="qty" type="number" min={1} placeholder="Jumlah masuk" required className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-emerald-500" />
@@ -51,7 +52,7 @@ export default async function StokMasukPage() {
               {logs.map((log) => (
                 <tr key={log.id} className="border-t border-gray-100 text-gray-700">
                   <td className="px-3 py-2 text-gray-500">{log.createdAt.toLocaleString("id-ID")}</td>
-                  <td className="px-3 py-2 text-gray-900">{log.product.name}</td>
+                  <td className="px-3 py-2 text-gray-900">{productDisplayName(log.product)}</td>
                   <td className="px-3 py-2 text-right text-emerald-600">+{log.change}</td>
                   <td className="px-3 py-2 text-gray-500">{log.note ?? "-"}</td>
                 </tr>

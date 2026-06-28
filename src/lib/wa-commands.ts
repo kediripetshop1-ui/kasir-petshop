@@ -3,6 +3,7 @@ import { sendText, downloadMedia } from "@/lib/wa";
 import { extractNota, type NotaItem } from "@/lib/ocr";
 import { getDailyReport, formatDailyReportText, getLowStockText } from "@/lib/reports";
 import { getBaliDateKey } from "@/lib/datetime";
+import { productDisplayName } from "@/lib/product";
 
 const PENDING_TTL_MIN = 30;
 
@@ -84,13 +85,13 @@ async function handleImage(from: string, imageId: string): Promise<void> {
   }
 
   // Cocokkan tiap item nota dengan produk yang ada.
-  const products = await db.product.findMany();
+  const products = await db.product.findMany({ where: { archived: false } });
   const matched: { productId: string; nama: string; qty: number; hargaSatuan: number | null }[] = [];
   const unmatched: NotaItem[] = [];
 
   for (const item of nota.items) {
     const p = matchProduct(item.nama, products);
-    if (p) matched.push({ productId: p.id, nama: p.name, qty: item.qty, hargaSatuan: item.hargaSatuan });
+    if (p) matched.push({ productId: p.id, nama: productDisplayName(p), qty: item.qty, hargaSatuan: item.hargaSatuan });
     else unmatched.push(item);
   }
 
@@ -158,22 +159,21 @@ async function confirmPending(from: string): Promise<void> {
   await sendText(from, `✅ Stok diperbarui:\n${lines.join("\n")}`);
 }
 
-/** Pencocokan sederhana nama nota → produk (case-insensitive, token overlap). */
-function matchProduct(
-  notaName: string,
-  products: { id: string; name: string; sku: string }[],
-): { id: string; name: string } | null {
+type MatchableProduct = { id: string; name: string; sku: string; brand: string | null; weight: string | null };
+
+/** Pencocokan sederhana nama nota → produk (case-insensitive, token overlap, mempertimbangkan brand+berat). */
+function matchProduct(notaName: string, products: MatchableProduct[]): MatchableProduct | null {
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
   const target = norm(notaName);
   if (!target) return null;
   const targetTokens = target.split(" ").filter((t) => t.length >= 3);
 
-  let best: { id: string; name: string } | null = null;
+  let best: MatchableProduct | null = null;
   let bestScore = 0;
 
   for (const p of products) {
-    const pn = norm(p.name);
-    if (p.sku.toLowerCase() === notaName.toLowerCase().trim()) return { id: p.id, name: p.name };
+    const pn = norm(productDisplayName(p));
+    if (p.sku.toLowerCase() === notaName.toLowerCase().trim()) return p;
     let score = 0;
     if (pn === target) score = 100;
     else if (pn.includes(target) || target.includes(pn)) score = 80;
@@ -184,7 +184,7 @@ function matchProduct(
     }
     if (score > bestScore) {
       bestScore = score;
-      best = { id: p.id, name: p.name };
+      best = p;
     }
   }
 

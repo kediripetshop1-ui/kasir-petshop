@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { productDisplayName } from "@/lib/product";
 import { updateSale } from "../../actions";
 
 function formatRupiah(value: number) {
@@ -29,7 +30,7 @@ export default async function EditSalePage({ params }: { params: Promise<{ id: s
         <ul className="space-y-1 text-sm text-gray-600">
           {sale.items.map((item) => (
             <li key={item.id} className="flex justify-between">
-              <span>{item.product.name} x{item.qty}</span>
+              <span>{productDisplayName(item.product)} x{item.qty}</span>
               <span>Rp{formatRupiah(item.subtotal)}</span>
             </li>
           ))}

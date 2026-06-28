@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { formatBaliDateTime } from "@/lib/datetime";
+import { productDisplayName } from "@/lib/product";
 import PrintButton from "./print-button";
 
 function formatRupiah(value: number) {
@@ -47,7 +48,7 @@ export default async function StrukPage({ params }: { params: Promise<{ id: stri
 
         {sale.items.map((item) => (
           <div key={item.id} className="mb-1">
-            <p>{item.product.name}</p>
+            <p>{productDisplayName(item.product)}</p>
             <div className="flex justify-between">
               <span>{item.qty} x {formatRupiah(item.price)}</span>
               <span>{formatRupiah(item.subtotal)}</span>

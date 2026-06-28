@@ -6,6 +6,9 @@ import { db } from "@/lib/db";
 export async function createProduct(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const sku = String(formData.get("sku") ?? "").trim();
+  const brand = String(formData.get("brand") ?? "").trim() || null;
+  const weight = String(formData.get("weight") ?? "").trim() || null;
+  const keyword = String(formData.get("keyword") ?? "").trim() || null;
   const categoryId = String(formData.get("categoryId") ?? "") || null;
   const unit = String(formData.get("unit") ?? "pcs");
   const costPrice = Number(formData.get("costPrice") ?? 0);
@@ -15,7 +18,7 @@ export async function createProduct(formData: FormData) {
   if (!name || !sku || !sellPrice) return;
 
   await db.product.create({
-    data: { name, sku, categoryId, unit, costPrice, sellPrice, stock },
+    data: { name, sku, brand, weight, keyword, categoryId, unit, costPrice, sellPrice, stock },
   });
 
   revalidatePath("/produk");

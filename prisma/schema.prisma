@@ -33,8 +33,11 @@ model Category {
 
 model Product {
   id         String     @id @default(cuid())
-  sku        String     @unique
-  name       String
+  sku        String     @unique // barcode
+  brand      String? // nama brand, mis. "Royal Canin"
+  name       String // nama produk tanpa brand/berat, mis. "Adult"
+  weight     String? // berat/ukuran, mis. "1kg", "500gr"
+  keyword    String? // kata kunci tambahan untuk pencarian, dipisah koma
   categoryId String?
   category   Category?  @relation(fields: [categoryId], references: [id])
   unit       String     @default("pcs")
