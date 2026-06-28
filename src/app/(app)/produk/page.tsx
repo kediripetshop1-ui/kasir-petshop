@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { LOW_STOCK_THRESHOLD } from "@/lib/reports";
 import { createProduct, deleteProduct } from "./actions";
 
 function formatRupiah(value: number) {
@@ -11,6 +12,8 @@ export default async function ProdukPage() {
     db.category.findMany({ orderBy: { name: "asc" } }),
   ]);
 
+  const perluRestok = products.filter((p) => p.stock <= LOW_STOCK_THRESHOLD).sort((a, b) => a.stock - b.stock);
+
   return (
     <div className="space-y-6">
       <div>
@@ -19,6 +22,22 @@ export default async function ProdukPage() {
           Tips: isi kolom SKU dengan nomor barcode produk (lihat di kemasan) supaya bisa langsung di-scan di halaman Kasir.
         </p>
       </div>
+
+      {perluRestok.length > 0 && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <h2 className="mb-2 font-semibold text-red-700">
+            ⚠️ Perlu Direstok (sisa ≤ {LOW_STOCK_THRESHOLD}) — {perluRestok.length} produk
+          </h2>
+          <ul className="grid grid-cols-1 gap-1 text-sm text-red-700 sm:grid-cols-2 lg:grid-cols-3">
+            {perluRestok.map((p) => (
+              <li key={p.id} className="flex justify-between rounded-md bg-white px-3 py-1.5 shadow-sm">
+                <span>{p.name}</span>
+                <span className="font-semibold">{p.stock} {p.unit}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <form
         action={createProduct}
@@ -36,7 +55,6 @@ export default async function ProdukPage() {
         <input name="costPrice" type="number" placeholder="Harga beli" className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-emerald-500" />
         <input name="sellPrice" type="number" placeholder="Harga jual" required className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-emerald-500" />
         <input name="stock" type="number" placeholder="Stok awal" defaultValue={0} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-emerald-500" />
-        <input name="minStock" type="number" placeholder="Stok minimum" defaultValue={0} className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-emerald-500" />
         <button type="submit" className="col-span-2 rounded-lg bg-emerald-600 px-3 py-2 font-medium text-white hover:bg-emerald-700 md:col-span-1">
           Tambah Produk
         </button>
@@ -61,7 +79,7 @@ export default async function ProdukPage() {
                 <td className="px-3 py-2 text-gray-900">{p.name}</td>
                 <td className="px-3 py-2 text-gray-500">{p.category?.name ?? "-"}</td>
                 <td className="px-3 py-2 text-right">{formatRupiah(p.sellPrice)}</td>
-                <td className={`px-3 py-2 text-right ${p.stock <= p.minStock ? "text-red-600 font-medium" : ""}`}>{p.stock} {p.unit}</td>
+                <td className={`px-3 py-2 text-right ${p.stock <= LOW_STOCK_THRESHOLD ? "text-red-600 font-medium" : ""}`}>{p.stock} {p.unit}</td>
                 <td className="px-3 py-2 text-right">
                   <form action={async () => { "use server"; await deleteProduct(p.id); }}>
                     <button type="submit" className="text-red-500 hover:text-red-600">Hapus</button>

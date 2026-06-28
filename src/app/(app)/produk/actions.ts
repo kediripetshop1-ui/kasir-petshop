@@ -11,12 +11,11 @@ export async function createProduct(formData: FormData) {
   const costPrice = Number(formData.get("costPrice") ?? 0);
   const sellPrice = Number(formData.get("sellPrice") ?? 0);
   const stock = Number(formData.get("stock") ?? 0);
-  const minStock = Number(formData.get("minStock") ?? 0);
 
   if (!name || !sku || !sellPrice) return;
 
   await db.product.create({
-    data: { name, sku, categoryId, unit, costPrice, sellPrice, stock, minStock },
+    data: { name, sku, categoryId, unit, costPrice, sellPrice, stock },
   });
 
   revalidatePath("/produk");

@@ -1,6 +1,9 @@
 import { db } from "@/lib/db";
 import { formatBaliDate, getBaliDayRange, getBaliDateKey } from "@/lib/datetime";
 
+/** Ambang stok menipis berlaku sama untuk semua produk (tidak per-produk lagi). */
+export const LOW_STOCK_THRESHOLD = 5;
+
 function rp(value: number) {
   return "Rp" + new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(value);
 }
@@ -116,11 +119,11 @@ export function formatDailyReportText(r: DailyReport): string {
   ].join("\n");
 }
 
-/** Daftar produk stok menipis (stock <= minStock). */
+/** Daftar produk stok menipis (stock <= LOW_STOCK_THRESHOLD). */
 export async function getLowStockText(): Promise<string> {
-  const products = await db.product.findMany({ orderBy: { stock: "asc" } });
-  const low = products.filter((p) => p.minStock > 0 && p.stock <= p.minStock);
+  const products = await db.product.findMany({ where: { archived: false }, orderBy: { stock: "asc" } });
+  const low = products.filter((p) => p.stock <= LOW_STOCK_THRESHOLD);
   if (low.length === 0) return "✅ Semua stok aman, tidak ada yang menipis.";
-  const lines = low.map((p) => `• ${p.name} — sisa ${p.stock} ${p.unit} (min ${p.minStock})`);
-  return `*STOK MENIPIS* (${low.length} produk)\n` + lines.join("\n");
+  const lines = low.map((p) => `• ${p.name} — sisa ${p.stock} ${p.unit}`);
+  return `*STOK MENIPIS* (${low.length} produk, sisa ≤ ${LOW_STOCK_THRESHOLD})\n` + lines.join("\n");
 }
